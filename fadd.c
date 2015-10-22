@@ -7,6 +7,109 @@
 丸め処理はnearest even。
 */
 
+uint32_t shift_r(uint32_t s, int k)
+{
+//tの27ビット目はflag
+	uint32_t t;
+	switch (k) {
+		case 0: t = s;
+				break;
+		case 1: t = 0x4000000 + (s>>1);
+				if((s & 0x1)==0) t = t - 0x4000000;
+				break;
+		case 2: t = 0x4000000 + (s>>2);
+				if((s & 0x3)==0) t = t - 0x4000000;
+				break;
+		case 3: t = 0x4000000 + (s>>3);
+				if((s & 0x7)==0) t = t - 0x4000000;
+				break;
+		case 4: t = 0x4000000 + (s>>4);
+				if((s & 0xF)==0) t = t - 0x4000000;
+				break;
+		case 5: t = 0x4000000 + (s>>5);
+				if((s & 0x1F)==0) t = t - 0x4000000;
+				break;
+		case 6: t = 0x4000000 + (s>>6);
+				if((s & 0x3F)==0) t = t - 0x4000000;
+				break;
+		case 7: t = 0x4000000 + (s>>7);
+				if((s & 0x7F)==0) t = t - 0x4000000;
+				break;
+		case 8: t = 0x4000000 + (s>>8);
+				if((s & 0xFF)==0) t = t - 0x4000000;
+				break;
+		case 9: t = 0x4000000 + (s>>9);
+				if((s & 0x1FF)==0) t = t - 0x4000000;
+				break;
+		case 10: t = 0x4000000 + (s>>10);
+				if((s & 0x3FF)==0) t = t - 0x4000000;
+				break;
+		case 11: t = 0x4000000 + (s>>11);
+				if((s & 0x7FF)==0) t = t - 0x4000000;
+				break;
+		case 12: t = 0x4000000 + (s>>12);
+				if((s & 0xFFF)==0) t = t - 0x4000000;
+				break;
+		case 13: t = 0x4000000 + (s>>13);
+				if((s & 0x1FFF)==0) t = t - 0x4000000;
+				break;
+		case 14: t = 0x4000000 + (s>>14);
+				if((s & 0x3FFF)==0) t = t - 0x4000000;
+				break;
+		case 15: t = 0x4000000 + (s>>15);
+				if((s & 0x7FFF)==0) t = t - 0x4000000;
+				break;
+		case 16: t = 0x4000000 + (s>>16);
+				if((s & 0xFFFF)==0) t = t - 0x4000000;
+				break;
+		case 17: t = 0x4000000 + (s>>17);
+				if((s & 0x1FFFF)==0) t = t - 0x4000000;
+				break;
+		case 18: t = 0x4000000 + (s>>18);
+				if((s & 0x3FFFF)==0) t = t - 0x4000000;
+				break;
+		case 19: t = 0x4000000 + (s>>19);
+				if((s & 0x7FFFF)==0) t = t - 0x4000000;
+				break;
+		case 20: t = 0x4000000 + (s>>20);
+				if((s & 0xFFFFF)==0) t = t - 0x4000000;
+				break;
+		case 21: t = 0x4000000 + (s>>21);
+				if((s & 0x1FFFFF)==0) t = t - 0x4000000;
+				break;
+		case 22: t = 0x4000000 + (s>>22);
+				if((s & 0x3FFFFF)==0) t = t - 0x4000000;
+				break;
+		case 23: t = 0x4000000 + (s>>23);
+				if((s & 0x7FFFFF)==0) t = t - 0x4000000;
+				break;
+		case 24: t = 0x4000000 + (s>>24);
+				if((s & 0xFFFFFF)==0) t = t - 0x4000000;
+				break;
+		case 25: t = 0x4000000 + (s>>25);
+				if((s & 0x1FFFFFF)==0) t = t - 0x4000000;
+				break;
+	}
+	return t;
+}
+
+uint32_t shift_l(uint32_t s, int k)
+{
+	return s<<k;
+}
+
+uint32_t lzc(uint32_t x)
+{
+    uint32_t y;
+    uint32_t n = 25;
+    y = x >> 16; if (y != 0){ n = n - 16 ; x = y; }
+    y = x >>  8; if (y != 0){ n = n -  8 ; x = y; }
+    y = x >>  4; if (y != 0){ n = n -  4 ; x = y; }
+    y = x >>  2; if (y != 0){ n = n -  2 ; x = y; }
+    y = x >>  1; if (y != 0){ n = n -  1 ; x = y; }
+    return n - (x & 1);
+}
+
 uint32_t fadd(uint32_t a, uint32_t b)
 {
 	uint32_t w;
@@ -17,7 +120,8 @@ uint32_t fadd(uint32_t a, uint32_t b)
 	uint32_t l_expo;
 	uint32_t w_frac;
 	uint32_t l_frac;
-	uint32_t shift;
+	int shift;
+	uint32_t shifted_frac;
 	uint32_t tmp_frac1;
 	uint32_t tmp_frac2;
 	uint32_t expo;
@@ -27,7 +131,7 @@ uint32_t fadd(uint32_t a, uint32_t b)
 	uint32_t plusinf = 0x7F800000;
 	uint32_t minusinf = 0xFF800000;
 	uint32_t nan = 0x7FC00000;
-	uint32_t count = 0;
+	int count = 0;
 	int flag = 0;
 
 	if((a<<1) >= (b<<1)){
@@ -67,11 +171,11 @@ uint32_t fadd(uint32_t a, uint32_t b)
 
 	if(w_sign==l_sign){
 		tmp_frac1 = (l_frac + 0x800000) << 1;
-		while(shift>0){
-			if((tmp_frac1 & 1) == 1) flag = 1;
-			tmp_frac1 = tmp_frac1 >>1;
-			shift = shift - 1;
-		}
+
+		shifted_frac = shift_r(tmp_frac1, shift);
+		if(shifted_frac > 0x3FFFFFF) flag = 1;
+		tmp_frac1 = shifted_frac & 0x3FFFFFF;
+
 		tmp_frac2 = ((w_frac + 0x800000) << 1) + tmp_frac1;
 		if((tmp_frac2 & 0x2000000) == 0x2000000){
 			if(w_expo==254){
@@ -100,11 +204,11 @@ uint32_t fadd(uint32_t a, uint32_t b)
 	else{
 		if(shift>1){
 			tmp_frac1 = (l_frac + 0x800000) << 2; 
-			while(shift>0){
-				if((tmp_frac1 & 1) == 1) flag = 1;
-				tmp_frac1 = tmp_frac1 >>1;
-				shift = shift - 1;
-			}
+
+			shifted_frac = shift_r(tmp_frac1, shift);
+			if(shifted_frac > 0x3FFFFFF) flag = 1;
+			tmp_frac1 = shifted_frac & 0x3FFFFFF;
+
 			tmp_frac2 = ((w_frac + 0x800000) << 2) - tmp_frac1;
 			if((tmp_frac2 & 0x2000000) == 0x2000000){
 				expo = w_expo;
@@ -125,16 +229,18 @@ uint32_t fadd(uint32_t a, uint32_t b)
 			}
 		}
 		else{
-			tmp_frac1 = ((w_frac + 0x800000)<<shift) - (l_frac + 0x800000);
+			
+			if(shift==0) tmp_frac1 = (w_frac - l_frac) << 1;
+			else tmp_frac1 = (w_frac << 1) - l_frac + 0x800000;
 			if(tmp_frac1==0) return 0;
-			while((tmp_frac1 & (0x800000<<shift)) != (0x800000<<shift)){
-				count++;
-				tmp_frac1 = tmp_frac1 << 1;
-			}
-			if(w_expo < (count + 1)) return 0;
+
+			count = lzc(tmp_frac1);
+			tmp_frac1 = shift_l(tmp_frac1, count);  
+ 
+			if(w_expo <= count) return 0;
 			expo = w_expo - count;
-			if(count == 0 && ((tmp_frac1 & 3) == 3)) frac = (tmp_frac1 >> 1) + 1 -0x800000;
-			else frac = (tmp_frac1>>shift) - 0x800000;
+			if(count == 0 && ((tmp_frac1 & 3) == 3)) frac = (tmp_frac1 >> 1) - 0x7FFFFF;
+			else frac = (tmp_frac1>>1) - 0x800000;
 		}
 	}
 
