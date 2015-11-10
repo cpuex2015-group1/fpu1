@@ -19,7 +19,6 @@ uint32_t read_nbit(FILE *fp, int n){
 	return data;
 }
 
-
 int main(){
 
 	uint32_t input,output;
@@ -39,5 +38,9 @@ int main(){
 	input = 0x12345678;
 	addr = (input & 0x7FE000)>>13; //fsqrtの場合、 addr = (input.int32 & 0xFFC000)>>14;
 	output = finv(input,table1[addr], table2[addr]);
-	
+
+	fclose(fp1);
+	fclose(fp2);
+
+	return 0;
 }
