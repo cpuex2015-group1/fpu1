@@ -22,8 +22,8 @@ architecture struct of fadd_step3b is
 begin
   
   tmp_frac1 <= ("00" & frac2(25 downto 2)) - x"800000" when frac2(25) = '1' else
-               ('0' & frac2(25 downto 1)) + 1 when (frac2(2 downto 1) = "11") and (flag2 = '0') else
-               frac2;
+               ('0' & frac2(25 downto 1)) + 1 when (frac2(1 downto 0) = "11") and (flag2 = '0') else
+               ('0' & frac2(25 downto 1));
 
   frac      <= tmp_frac1 + 1 when (frac2(25) = '1') and ((frac2(1 downto 0) = "11") or ((frac2(2 downto 0) = "110") and (flag2 = '0'))) else
                tmp_frac1     when (frac2(25) = '1') else
